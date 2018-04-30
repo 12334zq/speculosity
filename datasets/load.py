@@ -97,6 +97,7 @@ def load(dataset, root, one_hot=True):
 
         # Mixing classes
         indexes = np.arange(100*nb_classes)
+        np.random.seed(0)
         np.random.shuffle(indexes)
         data = data[indexes, :, :, :]
         labels = labels[indexes]
