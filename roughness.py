@@ -1,67 +1,118 @@
-from keras import models, callbacks
+from tensorflow.python.keras.layers import Dense, Conv2D, MaxPool2D, Flatten,\
+    Dropout, AveragePooling2D
+from tensorflow.python.keras.models import Sequential
+from keras import models
+import datasets
 import os
+from sklearn.metrics import confusion_matrix
+import numpy as np
 import matplotlib.pyplot as plt
-root = os.getcwd()
-os.chdir(root + '/lib')
-from vgg16 import VGG16
-os.chdir(root + '/../datasets')
-from data import load
-
-# Setting up plot
-plt.close('all')
-plt.ion()
-fig = plt.figure()
-axis1 = fig.add_subplot(211)
-line1, = axis1.plot([1, 2, 3])
-plt.ylabel("Loss")
-
-axis2 = fig.add_subplot(212)
-line2, = axis2.plot([1, 2, 3])
-plt.ylabel("Accuracy")
-plt.xlabel("batches")
-
-plt.show()
-
-
-class LossHistory(callbacks.Callback):
-    def on_train_begin(self, logs={}):
-        self.loss = []
-        self.acc = []
-
-    def on_batch_end(self, batch, logs={}):
-        self.loss.append(logs.get('loss'))
-        self.acc.append(logs.get('acc'))
-        line1.set_data(range(len(self.loss)), self.loss)
-#        line2.set_data(range(len(self.acc)), self.acc)
-        axis1.set_xlim(0, len(self.loss))
-        axis1.set_ylim(0, max(self.loss))
-#        axis2.set_xlim(0, len(self.acc))
-#        axis2.set_ylim(0, max(self.acc))
-        plt.draw()
-        plt.pause(0.05)
-
 
 # Importing data
-data = load("roughness", True)
+dataset_root = "./../data/datasets/roughness/1/bmp"
+data = datasets.load(dataset="roughness", root=dataset_root, one_hot="True")
 input_shape = (128, 128, 1)
 nb_classes = 13
 
 # Parameters
-batch_size = 4
-filename_load = root + "/models/roughness"
-filename_save = filename_load
-load = True
+load_model_name = "./../data/models/roughness"
+save_model_name = load_model_name
+load = False
 save = True
+
+
+def VGG11(input_shape, nb_classes, dropout=False, dropout_rate=0.2):
+    """
+    Creates a vgg11 network.
+
+    Parameters
+    ----------
+    input_shape : tuple
+        The shape of the input tensor not including the sample axis.
+        Tensorflow uses the NHWC dimention ordering convention.
+    nb_class : int
+        The number of output class. The network will have this number of
+        output nodes for one-hot encoding.
+    dropout : bool
+        Where or not to implement dropout in the fully-connected layers.
+    dropout_rate : float
+        Dropout rate.
+
+    Returns
+    -------
+    keras.models.Sequential() :
+        The create vgg11 network.
+    """
+    vgg11 = Sequential()
+
+    # Sub-Sampling
+    # vgg11.add(AveragePooling2D(pool_size=(2,2), input_shape=input_shape))
+
+    # sub-net 1
+    vgg11.add(Conv2D(filters=8,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu',
+                     input_shape=input_shape))
+    vgg11.add(Conv2D(filters=16,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(MaxPool2D(pool_size=2))
+
+    # sub-net 2
+    vgg11.add(Conv2D(filters=16,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(Conv2D(filters=16,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(MaxPool2D(pool_size=2))
+
+    # sub-net 3
+    vgg11.add(Conv2D(filters=32,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(Conv2D(filters=32,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(MaxPool2D(pool_size=2))
+
+    # sub-net 4
+    vgg11.add(Conv2D(filters=32,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(Conv2D(filters=64,
+                     kernel_size=3,
+                     padding='same',
+                     activation='relu'))
+    vgg11.add(MaxPool2D(pool_size=2))
+
+    # dense layers
+    vgg11.add(Flatten())
+    vgg11.add(Dense(units=128, activation='relu'))
+    vgg11.add(Dropout(dropout_rate)) if dropout else None
+    vgg11.add(Dense(units=128, activation='relu'))
+    vgg11.add(Dropout(dropout_rate)) if dropout else None
+    vgg11.add(Dense(units=nb_classes, activation='softmax'))
+
+    return vgg11
+
 
 # Load/Creaate Model
 if load:
     try:
-        model = models.load_model(filename_load, compile=False)
+        model = models.load_model(load_model_name, compile=False)
     except OSError:
         print("ERROR : Saved model not found! Exiting!")
         os._exit(0)
 else:
-    model = VGG16(input_shape, nb_classes, False)
+    model = VGG11(input_shape, nb_classes, dropout=True, dropout_rate=0.4)
 
 # Train Model
 model.compile(optimizer='adam',
@@ -69,20 +120,29 @@ model.compile(optimizer='adam',
               metrics=['accuracy'])
 model.fit(x=data.train.data,
           y=data.train.labels,
-          batch_size=batch_size,
-          epochs=2,
+          batch_size=64,
+          epochs=48,
           validation_split=0.1,
-          shuffle=True,
-          callbacks=[LossHistory()])
+          shuffle=True)
 
 # Save model
 if save:
     try:
-        model.save(filename_save)
+        model.save(save_model_name)
     except OSError:
         print("ERROR : An error occured while saving the model. All progress"
               " is lost! ")
 
 # Test network
-score = model.evaluate(data.test.data, data.test.labels, batch_size=batch_size)
+score = model.evaluate(data.test.data, data.test.labels, batch_size=64)
 print("Test loss: {0:2f}, Test Accuracy: {1:2f}".format(score[0], score[1]))
+
+
+# Print confusion matrix
+pred_labels = model.predict(data.test.data)
+cm = confusion_matrix(y_true=np.argmax(data.test.labels, 1),
+                      y_pred=np.argmax(pred_labels, 1))
+plt.imshow(cm)
+plt.ylabel("True label")
+plt.xlabel("Predicted label")
+plt.show()
