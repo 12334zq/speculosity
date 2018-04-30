@@ -5,32 +5,7 @@ import collections
 Dataset = collections.namedtuple('Dataset', ['data', 'labels'])
 Datasets = collections.namedtuple('Datasets', ['train', 'validation', 'test'])
 
-# Rings dataset
-_rings_root = "./bpm/rings/data"
-_rings_test_size = 200
-_rings_train_size = 1000
-_rings_val_size = 50
-
-# Bessel dataset
-_bessel_root = "./bpm/bessel/data"
-_bessel_test_size = 200
-_bessel_train_size = 1000
-_bessel_val_size = 50
-
-# Gaussian dataset
-_gaussian_root = "./bpm/gaussian/data"
-_gaussian_test_size = 200
-_gaussian_train_size = 1000
-_gaussian_val_size = 50
-
-# Fwgn dataset
-_fwgn_root = "./bpm/fwgn/data"
-_fwgn_test_size = 200
-_fwgn_train_size = 1000
-_fwgn_val_size = 50
-
 # Roughness dataset
-_roughness_root = "./roughness/1/data/bmp"
 _roughness_class_dir = ['A2', 'A3', 'A4', 'A5', 'A6', 'A7',
                         'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8']
 _roughness_image_shape = (128, 128)
@@ -85,7 +60,7 @@ def array_from_images(root, filenames):
     return images
 
 
-def load(dataset, one_hot=True):
+def load(dataset, root, one_hot=True):
     """
     Returns one of the available data sets.
 
@@ -104,36 +79,16 @@ def load(dataset, one_hot=True):
     val_labels = []
     val_data = []
 
-    if dataset == "rings":
-        # Importing Data
-        train_data = \
-            array_from_images(_rings_root + "/train/images",
-                              _imagenames(_rings_train_size, start_at_one=True))
-        train_labels = \
-            array_from_images(_rings_root + "/train/images",
-                              _imagenames(_rings_train_size, start_at_one=True))
-        val_data = \
-            array_from_images(_rings_root + "/val/images",
-                              _imagenames(_rings_val_size, start_at_one=True))
-        val_labels = \
-            array_from_images(_rings_root + "/val/images",
-                              _imagenames(_rings_val_size, start_at_one=True))
-        test_data = \
-            array_from_images(_rings_root + "/test/images",
-                              _imagenames(_rings_test_size, start_at_one=True))
-        test_labels = \
-            array_from_images(_rings_root + "/test/images",
-                              _imagenames(_rings_test_size, start_at_one=True))
-
-    elif dataset == "roughness":
+    if dataset == "roughness":
         classfication = True
         nb_classes = len(_roughness_class_dir)
 
         # Importing data
         data = np.empty((0, *_roughness_image_shape, _roughness_nb_channels))
         for dir in _roughness_class_dir:
-            root = _roughness_root + '/' + dir
-            data = np.append(data, array_from_images(root, _imagenames(100)),
+            dirpath = root + '/' + dir
+            data = np.append(data,
+                             array_from_images(dirpath, _imagenames(100)),
                              0)
 
         # Creating labels
@@ -170,8 +125,5 @@ def load(dataset, one_hot=True):
 
 # Test code
 if __name__ == "__main__":
-    test_images = array_from_images(_rings_root + "/test/images",
-                                    _imagenames(_rings_test_size,
-                                                start_at_one=True))
-
-    dataset = load(dataset="roughness")
+    dataset = load(dataset="roughness",
+                   root="./../../data/datasets/roughness/1/bmp")
