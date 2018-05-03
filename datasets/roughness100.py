@@ -10,7 +10,6 @@ _full_classes = ['A2', 'A3', 'A4', 'A5', 'A6', 'A7',
                  'B2', 'B3', 'B4', 'B5', 'B6', 'B7']
 _A_classes = ['A2', 'A3', 'A4', 'A5', 'A6', 'A7']
 _B_classes = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7']
-_image_shape = (128, 128)
 _nb_channels = 1
 _roughness_test_ratio = 0.2
 
@@ -50,11 +49,13 @@ def load(root,
     # Select root
     if set64:
         root += "64p/"
+        image_shape = (64, 64)
     else:
         root += "128p/"
+        image_shape = (128, 128)
 
     # Importing data
-    data = np.empty((0, *_image_shape, _nb_channels))
+    data = np.empty((0, *image_shape, _nb_channels))
     for class_name in classes:
         dirpath = root + class_name
         data = np.append(data,
