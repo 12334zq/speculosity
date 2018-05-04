@@ -3,6 +3,7 @@ from tensorflow.python.keras.layers import Dense, Conv2D, MaxPool2D, Flatten,\
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras import models
 from datasets import roughness100
+from callbacks import PlotMetrics
 from sklearn.metrics import confusion_matrix
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,8 +17,8 @@ nb_classes = 12
 # Parameters
 load_model_name = "./../data/models/roughness100_64p_full"
 save_model_name = "./../data/models/roughness100_64p_full"
-load = False
-save = True
+load = True
+save = False
 
 
 def VGG11(input_shape, nb_classes, dropout=False, dropout_rate=0.2):
@@ -80,16 +81,16 @@ def VGG11(input_shape, nb_classes, dropout=False, dropout_rate=0.2):
 
     # dense layers
     vgg11.add(Flatten())
-    vgg11.add(Dense(units=48, activation='relu'))
+    vgg11.add(Dense(units=64, activation='relu'))
     vgg11.add(Dropout(dropout_rate)) if dropout else None
-    vgg11.add(Dense(units=48, activation='relu'))
+    vgg11.add(Dense(units=64, activation='relu'))
     vgg11.add(Dropout(dropout_rate)) if dropout else None
     vgg11.add(Dense(units=nb_classes, activation='softmax'))
 
     return vgg11
 
 
-# Load/Creaate Model
+# Load/Create Model
 if load:
     model = models.load_model(load_model_name, compile=False)
     print("Model loaded from \"{0:s}\"".format(load_model_name))
@@ -104,8 +105,9 @@ model.compile(optimizer='adam',
 model.fit(x=data.train.data,
           y=data.train.labels,
           batch_size=32,
-          epochs=16,
+          epochs=4,
           validation_split=0.1,
+          callbacks=[PlotMetrics(False)],
           shuffle=True)
 
 # Save model
@@ -123,6 +125,7 @@ print("Test loss: {0:2f}, Test Accuracy: {1:2f}".format(score[0], score[1]))
 pred_labels = model.predict(data.test.data)
 cm = confusion_matrix(y_true=np.argmax(data.test.labels, 1),
                       y_pred=np.argmax(pred_labels, 1))
+plt.figure()
 plt.imshow(cm)
 plt.ylabel("True label")
 plt.xlabel("Predicted label")
