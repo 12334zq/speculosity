@@ -10,15 +10,15 @@ import matplotlib.pyplot as plt
 
 # Importing data
 root = "./../data/datasets/roughness100/"
-data = roughness100.load(root=root, set64=True)
+data = roughness100.load(root=root, set64=True, merge=True)
 input_shape = (64, 64, 1)
-nb_classes = 12
+nb_classes = 6
 
 # Parameters
-load_model_name = "./../data/models/roughness100_64p_full"
-save_model_name = "./../data/models/roughness100_64p_full"
+load_model_name = "./../data/models/roughness100_64p_full_merged"
+save_model_name = "./../data/models/roughness100_64p_full_merged"
 load = True
-save = False
+save = True
 
 
 def VGG11(input_shape, nb_classes, dropout=False, dropout_rate=0.2):
@@ -93,8 +93,7 @@ def VGG11(input_shape, nb_classes, dropout=False, dropout_rate=0.2):
 # Load/Create Model
 if load:
     model = models.load_model(load_model_name, compile=False)
-    print("Model loaded from \"{0:s}\"".format(load_model_name))
-    print()
+    print("\nModel loaded from \"{0:s}\"\n".format(load_model_name))
 else:
     model = VGG11(input_shape, nb_classes, dropout=True, dropout_rate=0.4)
 
@@ -105,8 +104,8 @@ model.compile(optimizer='adam',
 
 model.fit(x=data.train.data,
           y=data.train.labels,
-          batch_size=32,
-          epochs=64,
+          batch_size=256,
+          epochs=128,
           validation_split=0.1,
           callbacks=[PlotMetrics(plot_acc=True, plot_loss=True)],
           shuffle=True)
@@ -114,8 +113,7 @@ model.fit(x=data.train.data,
 # Save model
 if save:
     model.save(save_model_name)
-    print("Model saved as \"{0:s}\"".format(save_model_name))
-    print()
+    print("\nModel saved as \"{0:s}\"\n".format(save_model_name))
 
 # Test network
 score = model.evaluate(data.test.data, data.test.labels, batch_size=64)
