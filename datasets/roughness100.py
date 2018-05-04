@@ -11,7 +11,6 @@ _full_classes = ['A2', 'A3', 'A4', 'A5', 'A6', 'A7',
 _A_classes = ['A2', 'A3', 'A4', 'A5', 'A6', 'A7']
 _B_classes = ['B2', 'B3', 'B4', 'B5', 'B6', 'B7']
 _nb_channels = 1
-_roughness_test_ratio = 0.2
 
 
 def load(root,
@@ -38,13 +37,13 @@ def load(root,
     # Select classes
     if classes.lower() == "full":
         nb_classes = len(_full_classes)
-        classes = _full_classes
+        class_names = _full_classes
     elif classes.lower() == 'a':
         nb_classes = len(_A_classes)
-        classes = _A_classes
+        class_names = _A_classes
     elif classes.lower() == 'b':
         nb_classes = len(_B_classes)
-        classes = _B_classes
+        class_names = _B_classes
 
     # Select root
     if set64:
@@ -56,7 +55,7 @@ def load(root,
 
     # Importing data
     data = np.empty((0, *image_shape, _nb_channels))
-    for class_name in classes:
+    for class_name in class_names:
         dirpath = root + class_name
         data = np.append(data,
                          array_from_images(dirpath, imagenames(100)),
@@ -64,22 +63,23 @@ def load(root,
 
     # Creating labels
     if merge and classes.lower() == "full":
-        labels = np.arange(nb_classes/2)
-        labels = labels.tile(2)
+        nb_classes = int(nb_classes/2) 
+        labels = np.arange(nb_classes)
+        labels = np.tile(labels, 2)
     else:
         labels = np.arange(nb_classes)
 
     labels = np.repeat(labels, 100)
 
     # Mixing classes
-    indexes = np.arange(100*nb_classes)
+    indexes = np.arange(data.shape[0])
     np.random.seed(0)
     np.random.shuffle(indexes)
     data = data[indexes, :, :, :]
     labels = labels[indexes]
 
     # Extracting sets
-    test_index = int(_roughness_test_ratio*100*nb_classes)
+    test_index = int(test_ratio * data.shape[0])
 
     test_data = data[0:test_index, :, :, :]
     test_labels = labels[0:test_index]
