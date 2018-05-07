@@ -2,7 +2,7 @@ import PyCapture2
 
 
 def printBuildInfo():
-    liber = PyCapture2.getLibraryVersion()
+    libVer = PyCapture2.getLibraryVersion()
     print("PyCapture2 library version: ",
           libVer[0], libVer[1], libVer[2], libVer[3])
     print()

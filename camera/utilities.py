@@ -1,6 +1,7 @@
 import numpy as np
 import PyCapture2
 import matplotlib.pyplot as plt
+import os
 
 _dGain = 0.2
 _dShutter = 0.05
@@ -14,7 +15,10 @@ class KeyEventHandler:
                  exit_key='q',
                  save_key=None,
                  save_dir=None,
-                 save_pixel_format=PyCapture2.PIXEL_FORMAT.RAW8):
+                 save_pixel_format=PyCapture2.PIXEL_FORMAT.RAW8,
+                 image_file_format=PyCapture2.IMAGE_FILE_FORMAT.RAW,
+                 on_exit_func=None,
+                 on_exit_args=()):
         """
         Key event handler for matplotlib figure that enables exiting
 
@@ -24,26 +28,35 @@ class KeyEventHandler:
         :param str save_dir:
         :param PyCapture2.PIXEL_FORMAT save_pixel_format:
         """
+        # If save
+        if save_key is not None and save_dir is None:
+            raise ValueError(
+                "If save key is specified, a save directory must also be!")
+        
         self.i = 0
         self.exit_key = exit_key
         self.save_key = save_key
         self.save_dir = save_dir
         self.camera = camera
         self.save_pixel_format = save_pixel_format
-
-        # If save
-        if save_key is not None and save_dir is None:
-            raise ValueError(
-                "If save key is specified, a save directory must also be!")
+        self.image_file_format = image_file_format
+        self.on_exit_func = on_exit_func
+        self.on_exit_args = on_exit_args
+  
+        # Create save directory it doesn't exist
+        if save_key is not None:
+            os.makedirs(save_dir, exist_ok=True)
 
     def __call__(self, event):
         if event.key == self.exit_key:
             plt.close(event.canvas.figure)
             self.camera.stopCapture()
+            if self.on_exit_func is not None:
+                self.on_exit_func(*self.on_exit_args)
         elif event.key == self.save_key:
-            image_name = self.save_dir + "{0:d}.raw".format(self.i)
+            image_name = self.save_dir + "/{0:d}.raw".format(self.i)
             image = self.camera.retrieveBuffer()
-            image.save(image_name.encode(), self.save_pixel_format)
+            image.save(image_name.encode(), self.image_file_format)
 
             print("\nImage saved : '", image_name, "'")
             self.i += 1
