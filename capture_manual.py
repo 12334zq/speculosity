@@ -32,14 +32,15 @@ except PyCapture2.Fc2error:
     sys.exit()
 
 # Setting Properties
-cam.setProperty(type=PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE,
-                autoManualMode=False, onOff=False)
-cam.setProperty(type=PyCapture2.PROPERTY_TYPE.FRAME_RATE,
-                autoManualMode=False, absValue=120)
-cam.setProperty(type=PyCapture2.PROPERTY_TYPE.SHUTTER,
-                autoManualMode=False, absValue=shutter)
-cam.setProperty(type=PyCapture2.PROPERTY_TYPE.GAIN,
-                autoManualMode=False, absValue=gain)
+if False:
+    cam.setProperty(type=PyCapture2.PROPERTY_TYPE.AUTO_EXPOSURE,
+                    autoManualMode=False, onOff=False)
+    cam.setProperty(type=PyCapture2.PROPERTY_TYPE.FRAME_RATE,
+                    autoManualMode=False, absValue=120)
+    cam.setProperty(type=PyCapture2.PROPERTY_TYPE.SHUTTER,
+                    autoManualMode=False, absValue=shutter)
+    cam.setProperty(type=PyCapture2.PROPERTY_TYPE.GAIN,
+                    autoManualMode=False, absValue=gain)
 
 # Setting Configuration
 cam.setConfiguration(grabMode=PyCapture2.GRAB_MODE.DROP_FRAMES)
