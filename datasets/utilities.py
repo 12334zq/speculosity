@@ -29,6 +29,7 @@ def array_from_images(root, filenames):
 
 
 def to_onehot(labels, nb_classes):
+    labels = labels.astype(int)
     nb_samples = len(labels)
     labels_onehot = np.zeros((nb_samples, nb_classes))
     labels_onehot[np.arange(nb_samples), labels] = 1
