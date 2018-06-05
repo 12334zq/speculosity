@@ -39,6 +39,7 @@ data = np.asarray(data)
 data = data.reshape((-1, *img_shape_flat))
 data_full = data.astype(float)
 data_A, data_B = np.split(data_full, 2)
+data_classes = np.split(data_full, nb_classes)
 del data
 
 # Creating labels
@@ -48,11 +49,14 @@ labels_half = np.arange(nb_classes/2)
 labels_merged = np.tile(labels_half, 2)
 labels_half = np.repeat(labels_half, img_per_class)
 labels_merged = np.repeat(labels_merged, img_per_class)
+labels_process = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
+labels_process = np.repeat(labels_process, img_per_class)
 
 # Creating one-hot labels
 labels_full_onehot = to_onehot(labels_full, nb_classes)
 labels_half_onehot = to_onehot(labels_half, int(nb_classes/2))
-labels_merged_onehot = to_onehot(labels_merged, nb_classes)
+labels_merged_onehot = to_onehot(labels_merged, int(nb_classes/2))
+labels_process_onehot = to_onehot(labels_process, 3)
 
 # Creating Data-Scaler
 scaler = StandardScaler()
@@ -105,8 +109,7 @@ print("Traing Centroid Classifier... ", end='\r')
 model = NearestCentroid()
 acc_full = []
 acc_merged = []
-acc_cross_ab = []
-acc_cross_ba = []
+acc_process = []
 nb_runs = 10
 for i in range(nb_runs):
     # Randomizing dataset order
@@ -116,12 +119,14 @@ for i in range(nb_runs):
     data_full_r = data_full[indexes, :]
     labels_full_r = labels_full[indexes]
     labels_merged_r = labels_merged[indexes]
+    labels_process_r = labels_process[indexes]
 
     # Extracting sets
     test_index = int(test_ratio * data_full.shape[0])
     test_data, train_data = np.split(data_full_r, [test_index])
     test_labels_f, train_labels_f = np.split(labels_full_r, [test_index])
     test_labels_m, train_labels_m = np.split(labels_merged_r, [test_index])
+    test_labels_p, train_labels_p = np.split(labels_process_r, [test_index])
 
     # Normalizing sets
     train_data = scaler.fit_transform(train_data)
@@ -134,6 +139,10 @@ for i in range(nb_runs):
     # Traning & Testing Model with Merged labels
     model.fit(train_data, train_labels_m)
     acc_merged.append(model.score(test_data, test_labels_m))
+    
+    # Training & Testing Model with Process labels
+    model.fit(train_data, train_labels_p)
+    acc_process.append(model.score(test_data, test_labels_p))
 
 # Traing with set A and Testing with test B
 model.fit(data_A, labels_half)
@@ -144,10 +153,12 @@ model.fit(data_B, labels_half)
 acc_cross_ba = model.score(data_A, labels_half)
 
 print("[DONE]")
-print("Accuracy (full set) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
+print("Accuracy (full labels) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
       format(np.mean(acc_full), np.std(acc_full), nb_runs))
-print("Accuracy (merged set) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
+print("Accuracy (roughness labels) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
       format(np.mean(acc_merged), np.std(acc_merged), nb_runs))
+print("Accuracy (process labels) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
+      format(np.mean(acc_process), np.std(acc_process), nb_runs))
 print("Accuracy (trained on A, tested on B) : mean = {0:3f}, std = {1:3f} "
       "({2:d} run)".format(acc_cross_ab, 0, 1))
 print("Accuracy (trained on B, tested on A) : mean = {0:3f}, std = {1:3f} "
@@ -169,8 +180,7 @@ def new_model(nb_classes):
 
 acc_full = []
 acc_merged = []
-acc_cross_ab = []
-acc_cross_ba = []
+acc_process = []
 nb_runs = 10
 for i in range(nb_runs):
     # Randomizing dataset order
@@ -180,12 +190,14 @@ for i in range(nb_runs):
     data_full_r = data_full[indexes]
     labels_full_r = labels_full_onehot[indexes]
     labels_merged_r = labels_merged_onehot[indexes]
+    labels_process_r = labels_process_onehot[indexes]
 
     # Extracting sets
     test_index = int(test_ratio * data_full.shape[0])
     test_data, train_data = np.split(data_full_r, [test_index])
     test_labels_f, train_labels_f = np.split(labels_full_r, [test_index])
     test_labels_m, train_labels_m = np.split(labels_merged_r, [test_index])
+    test_labels_p, train_labels_p = np.split(labels_process_r, [test_index])
 
     # Normalizing sets
     train_data = scaler.fit_transform(train_data)
@@ -204,7 +216,7 @@ for i in range(nb_runs):
                                    verbose=0)[1])
 
     # Traning & Testing Model with Merged labels
-    model = new_model(nb_classes)
+    model = new_model(int(nb_classes/2))
     model.fit(x=train_data,
               y=train_labels_m,
               batch_size=64,
@@ -214,6 +226,19 @@ for i in range(nb_runs):
     acc_merged.append(model.evaluate(x=test_data,
                                      y=test_labels_m,
                                      verbose=0)[1])
+
+    # Training & Testing Model with Process labels
+    model = new_model(3)
+    model.fit(x=train_data,
+              y=train_labels_p,
+              batch_size=64,
+              epochs=5,
+              shuffle=True,
+              verbose=0)
+    acc_process.append(model.evaluate(x=test_data,
+                                      y=test_labels_p,
+                                      verbose=0)[1])
+
 
 # Traing with set A and Testing with test B
 model = new_model(int(nb_classes/2))
@@ -240,6 +265,8 @@ print("Accuracy (full set) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
       format(np.mean(acc_full), np.std(acc_full), nb_runs))
 print("Accuracy (merged set) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
       format(np.mean(acc_merged), np.std(acc_merged), nb_runs))
+print("Accuracy (process labels) : mean = {0:3f}, std = {1:3f} ({2:d} runs)".
+      format(np.mean(acc_process), np.std(acc_process), nb_runs))
 print("Accuracy (trained on A, tested on B) : mean = {0:3f}, std = {1:3f} "
       "({2:d} run)".format(acc_cross_ab, 0, 1))
 print("Accuracy (trained on B, tested on A) : mean = {0:3f}, std = {1:3f} "
@@ -267,8 +294,9 @@ def new_model():
     return model
 
 
-nb_runs = 1
+nb_runs = 10
 mean = np.zeros((nb_runs, int(nb_classes/2)))
+loss = []
 for i in range(nb_runs):
     # Randomizing dataset order
     np.random.seed(i)
@@ -290,13 +318,16 @@ for i in range(nb_runs):
     model = new_model()
     model.fit(x=train_data,
               y=train_labels,
-              batch_size=64,
-              epochs=5,
+              batch_size=32,
+              epochs=6,
               shuffle=True,
               verbose=1)
-    data = np.split(scaler.transform(data_A), 6)
-    for i in range(2):
-        pred = model.predict(x=data[i], verbose=1)
-        plt.hist(pred, 50)
+    loss.append(model.evaluate(x=test_data, y=test_labels, verbose=1)[0])
 
 print("[DONE]")
+
+print("Loss (mean absolute percentage error) : mean = {0:3f}," 
+      " std = {1:3f} ({2:d} runs)".
+      format(np.mean(loss), np.std(loss), nb_runs))
+
+
