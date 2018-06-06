@@ -13,32 +13,36 @@ class PlotMetrics(Callback):
         self.plot_acc = plot_acc
         self.plot_loss = plot_loss
         self.n_ax = int(plot_acc) + int(plot_loss)
+        self.hasrun = False
 
     def on_train_begin(self, logs={}):
-        # Prepare figure
-        if self.n_ax > 0:
-            fig = plt.figure()
-
-        # Loss plot
-        if self.plot_loss:
-            self.ax1 = fig.add_subplot(self.n_ax, 1, self.n_ax)
-            self.ax1.set_xlabel('Epochs')
-            self.ax1.set_ylabel('Loss')
-            self.l1 = self.ax1.plot(self.x, self.losses, label="Train loss")[0]
-            self.l2 = self.ax1.plot(self.x, self.val_losses, label="Val loss")[0]
-            self.ax1.legend()
-            plt.grid(True)
-
-        # Accuracy plot
-        if self.plot_acc:
-            self.ax2 = fig.add_subplot(self.n_ax, 1, 1)
-            self.ax2.set_ylabel('Accuracy')
-            self.l3 = \
-                self.ax2.plot(self.x, self.acc, label="Train accuracy")[0]
-            self.l4 = \
-                self.ax2.plot(self.x, self.val_acc, label="Val accuracy")[0]
-            self.ax2.legend()
-            plt.grid(True)
+        if not self.hasrun:
+            self.hasrun = True
+            
+            # Prepare figure
+            if self.n_ax > 0:
+                fig = plt.figure()
+    
+            # Loss plot
+            if self.plot_loss:
+                self.ax1 = fig.add_subplot(self.n_ax, 1, self.n_ax)
+                self.ax1.set_xlabel('Epochs')
+                self.ax1.set_ylabel('Loss')
+                self.l1 = self.ax1.plot(self.x, self.losses, label="Train loss")[0]
+                self.l2 = self.ax1.plot(self.x, self.val_losses, label="Val loss")[0]
+                self.ax1.legend()
+                plt.grid(True)
+    
+            # Accuracy plot
+            if self.plot_acc:
+                self.ax2 = fig.add_subplot(self.n_ax, 1, 1)
+                self.ax2.set_ylabel('Accuracy')
+                self.l3 = \
+                    self.ax2.plot(self.x, self.acc, label="Train accuracy")[0]
+                self.l4 = \
+                    self.ax2.plot(self.x, self.val_acc, label="Val accuracy")[0]
+                self.ax2.legend()
+                plt.grid(True)
 
     def on_epoch_end(self, epoch, logs={}):
         # Loss plot
@@ -74,6 +78,6 @@ class PlotMetrics(Callback):
         # Update plot
         if self.n_ax > 0:
             plt.draw()
-            plt.pause(0.001)
+            plt.pause(0.01)
 
         self.i += 1
