@@ -51,11 +51,14 @@ labels_half = np.arange(nb_classes/2)
 labels_merged = np.tile(labels_half, 2)
 labels_half = np.repeat(labels_half, img_per_class)
 labels_merged = np.repeat(labels_merged, img_per_class)
+labels_process = [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
+labels_process = np.repeat(labels_process, img_per_class)
 
 # Creating one-hot labels
 labels_full_onehot = to_onehot(labels_full, nb_classes)
 labels_half_onehot = to_onehot(labels_half, int(nb_classes/2))
-labels_merged_onehot = to_onehot(labels_merged, nb_classes)
+labels_merged_onehot = to_onehot(labels_merged, int(nb_classes/2))
+labels_process_onehot = to_onehot(labels_process, 3)
 
 # Creating Data-Scaler
 scaler = StandardScaler()
@@ -65,10 +68,13 @@ scaler = StandardScaler()
 print("Fitting PCA... \t", end='\r')
 
 # Normalizing sets
-data_full_norm = scaler.fit_transform(data_full)
-
+if True:
+    input_data = scaler.fit_transform(data_full)
+else:
+    input_data = data_full
+    
 pca = PCA(n_components=10)
-pca_full = pca.fit(data_full_norm).transform(data_full_norm)
+pca_full = pca.fit(input_data).transform(input_data)
 
 print("[DONE]")
 
@@ -134,7 +140,6 @@ print("The {0:d} first PCA components contain {1:2.2f}%".
 
 print("Plotting PCA Eigen Vectors... \t", end='\r', flush=True)
 
-
 class MidpointNormalize(mpl.colors.Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
@@ -148,6 +153,7 @@ class MidpointNormalize(mpl.colors.Normalize):
 
 
 # Eigen vectors
+N = 10
 for n in range(N):
     eigVec = pca.components_[n, :]
     eigVec = np.reshape(eigVec, img_shape)
