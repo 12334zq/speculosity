@@ -72,7 +72,7 @@ if True:
     input_data = scaler.fit_transform(data_full)
 else:
     input_data = data_full
-    
+
 pca = PCA(n_components=10)
 pca_full = pca.fit(input_data).transform(input_data)
 
@@ -80,47 +80,54 @@ print("[DONE]")
 
 # %% Plotting Scatter Plot Matrix
 
-plt.figure('Scatter Plot Matrix of PCA Projections')
-plt.tight_layout()
+print("Plotting PCA results... \t", end='\r')
+
 N = 4               # Number of PCA components to plot
+
 colors = ['#8b0000', '#ff0000', '#ff5a00', '#ff9a00', '#ffce00', '#f0ff00',
           '#66d4ff', '#00b8ff', '#009bd6', '#00719c', '#00415a', '#001f2b']
 
-print("Plotting PCA results... \t", end='\r')
+fig, axes = plt.subplots(N, N,
+                         tight_layout=False,
+                         figsize=(12, 9),
+                         dpi=100)
 
 for row in range(N):
     for col in range(N):
-        plt.subplot(N, N, col + N*row + 1)
+        ax = axes[row, col]
+        ax.set_xticks([])
+        ax.set_yticks([])
         if row == col:
             for i, class_name, color in zip(range(nb_classes), classes, colors):
-                plt.hist(pca_full[labels_full == i, col],
-                         bins=20,
-                         color=color)
-                plt.xticks([])
-                plt.yticks([])
-                plt.tight_layout()
+                ax.hist(pca_full[labels_full == i, col],
+                        bins=25,
+                        color=color)
         else:
+            handles = []
             for i, class_name, color in zip(range(nb_classes), classes, colors):
-                plt.scatter(pca_full[labels_full == i, col],
-                            pca_full[labels_full == i, row],
-                            alpha=.5,
-                            lw=0.1,
-                            marker='.',
-                            color=color,
-                            label=class_name)
-                plt.tight_layout()
-                plt.xticks([])
-                plt.yticks([])
+                h = ax.scatter(pca_full[labels_full == i, col],
+                               pca_full[labels_full == i, row],
+                               alpha=.5,
+                               lw=0.1,
+                               marker='.',
+                               color=color,
+                               label=class_name)
+                handles.append(h)
 
 # Ploting y labels
 for n in range(N):
-    plt.subplot(N, N, 1 + N*n)
-    plt.ylabel('PCA {0:d}'.format(n+1))
+    axes[n, 0].set_ylabel('PCA {0:d}'.format(n+1), fontsize=14)
 
 # Ploting y labels
 for n in range(N):
-    plt.subplot(N, N, N*N-n)
-    plt.xlabel('PCA {0:d}'.format(N-n))
+    axes[N-1, n].set_xlabel('PCA {0:d}'.format(n+1), fontsize=14)
+
+# PLotting legend
+fig.tight_layout(pad=1.05, h_pad=1, w_pad=1, rect=(0, 0, 1, 0.96))
+fig.legend(handles=handles, loc=9, fontsize=14, frameon=False,
+           handletextpad=0, markerscale=3,  ncol=12, columnspacing=1.2,
+           bbox_to_anchor=(0, 0, 1, 1))
+# fig.legend(bbox_to_anchor=(0, 0, 1, 1), fontsize=14, loc=2)
 
 print("[DONE]")
 
@@ -157,13 +164,14 @@ N = 10
 for n in range(N):
     eigVec = pca.components_[n, :]
     eigVec = np.reshape(eigVec, img_shape)
-    plt.figure('PCA Eigenvector {0:d}'.format(n+1))
+    plt.figure('PCA Eigenvector {0:d}'.format(n+1),)
     imgplot = plt.imshow(eigVec,
                          norm=MidpointNormalize(midpoint=0.),
                          cmap='bwr')
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
+    plt.savefig("./pca_eig{0:d}.png".format(n+1),bbox_inches='tight',dpi=100)
     # plt.colorbar()
     # plt.title("PCA Eigenvector {0:d}".format(n+1))
 
