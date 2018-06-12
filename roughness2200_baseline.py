@@ -204,8 +204,9 @@ for i in progressbar(range(nb_runs)):
     test_labels_p, train_labels_p = np.split(labels_process_r, [test_index])
 
     # Normalizing sets
-    train_data = scaler.fit_transform(train_data)
-    test_data = scaler.transform(test_data)
+    if False:
+        train_data = scaler.fit_transform(train_data)
+        test_data = scaler.transform(test_data)
 
     # Traning & Testing Model with Full labels
     model = new_model(nb_classes)
@@ -276,15 +277,10 @@ print("Accuracy (trained on B, tested on A) : mean = {0:3f}, std = {1:3f} "
       "({2:d} run)".format(acc_cross_ba, 0, 1))
 
 # %% Linear Regression
-print("Training Linear Regression... \t", end='\r')
+print("Training Linear Regression... \t", end='\r', flush=True)
 
 # Creating regression labels
 reg_labels = classes_Ra[labels_merged.astype(int)]
-
-
-def test(y_true, y_pred):
-    return K.abs(y_true - y_pred)
-
 
 def new_model():
     model = Sequential([Dense(units=1, input_shape=img_shape_flat)])
@@ -292,15 +288,14 @@ def new_model():
     #                    Dense(units=100, activation='relu'),
     #                    Dense(units=1)])
     model.compile(optimizer='adam',
-                  loss='mean_absolute_percentage_error',
-                  metrics=[test])
+                  loss='mean_absolute_percentage_error')
     return model
 
 
 nb_runs = 10
 mean = np.zeros((nb_runs, int(nb_classes/2)))
 loss = []
-for i in range(nb_runs):
+for i in progressbar(range(nb_runs)):
     # Randomizing dataset order
     np.random.seed(i)
     indexes = np.arange(data_full.shape[0])
@@ -324,8 +319,8 @@ for i in range(nb_runs):
               batch_size=32,
               epochs=6,
               shuffle=True,
-              verbose=1)
-    loss.append(model.evaluate(x=test_data, y=test_labels, verbose=1)[0])
+              verbose=0)
+    loss.append(model.evaluate(x=test_data, y=test_labels, verbose=0))
 
 print("[DONE]")
 

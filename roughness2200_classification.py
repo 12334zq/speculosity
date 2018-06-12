@@ -64,6 +64,7 @@ labels_process_onehot = to_onehot(labels_process, 3)
 # Creating Data-Scaler
 scaler = StandardScaler()
 
+
 # %% Netowrk
 
 def new_model(nb_classes, dropout=True, dropout_rate=0.2):
@@ -131,13 +132,14 @@ def new_model(nb_classes, dropout=True, dropout_rate=0.2):
     model.add(Dense(units=64, activation='relu'))
     model.add(Dropout(dropout_rate)) if dropout else None
     model.add(Dense(units=nb_classes, activation='softmax'))
-    
+
     # Compile Model
     model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
-              metrics=['accuracy'])
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy'])
 
     return model
+
 
 def train(model, train_data, train_labels):
     model.fit(x=train_data,
@@ -158,12 +160,12 @@ def train(model, train_data, train_labels):
               epochs=10,
               shuffle=True,
               verbose=0)
-    
+
     return model
 
 
 # %% Testing model
-    
+
 print("Training Convolutional Classifier... ", flush=True)
 
 acc_full = []
@@ -183,19 +185,19 @@ with ProgressBar(max_value=nb_runs*3 + 2) as bar:
         labels_full_r = labels_full_onehot[indexes]
         labels_merged_r = labels_merged_onehot[indexes]
         labels_process_r = labels_process_onehot[indexes]
-    
+
         # Extracting sets
         test_index = int(test_ratio * data_full.shape[0])
         test_data, train_data = np.split(data_full_r, [test_index])
         test_labels_f, train_labels_f = np.split(labels_full_r, [test_index])
         test_labels_m, train_labels_m = np.split(labels_merged_r, [test_index])
         test_labels_p, train_labels_p = np.split(labels_process_r, [test_index])
-    
+
         # Normalizing sets
         if False:
             train_data = scaler.fit_transform(train_data)
             test_data = scaler.transform(test_data)
-            
+
         # Traning & Testing Model with Full labels
         model = new_model(nb_classes)
         model = train(model, train_data, train_labels_f)
@@ -203,7 +205,7 @@ with ProgressBar(max_value=nb_runs*3 + 2) as bar:
                                        y=test_labels_f,
                                        verbose=0)[1])
         bar.update(i*3 + 1)
-    
+
         # Traning & Testing Model with Merged labels
         model = new_model(int(nb_classes/2))
         model = train(model, train_data, train_labels_m)
@@ -211,7 +213,7 @@ with ProgressBar(max_value=nb_runs*3 + 2) as bar:
                                          y=test_labels_m,
                                          verbose=0)[1])
         bar.update(i*3 + 2)
-    
+
         # Training & Testing Model with Process labels
         model = new_model(3)
         model = train(model, train_data, train_labels_p)
@@ -219,7 +221,7 @@ with ProgressBar(max_value=nb_runs*3 + 2) as bar:
                                           y=test_labels_p,
                                           verbose=0)[1])
         bar.update(i*3 + 3)
-        
+
     # Traing with set A and Testing with test B
     model = new_model(int(nb_classes/2))
     model = train(model, data_A, labels_half_onehot)
