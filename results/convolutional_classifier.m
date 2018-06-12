@@ -1,4 +1,4 @@
-%% 64p Dataset
+%% 64p Dataset (not normalized)
 acc_full = [0.9981060606060606; 0.9965909090909091; 0.9992424242424243;
     0.9981060606060606; 0.9965909090909091; 0.9977272727272727;
     0.9988636363636364; 0.9992424242424243; 0.9981060606060606;
@@ -16,12 +16,12 @@ acc_process = [0.9992424242424243; 0.9996212121212121; 0.9988636363636364;
 acc_ab = 0.48143939393939394;
 acc_ba = 1.54136;
 
-figure
+figure('name','Convolutional : 64 by 80 dataset','NumberTitle','off')
 acc_64p = [acc_full acc_roughness acc_process];
 boxplot(acc_64p, 'Labels',... 
     {'Full Labels','Roughness Labels','Process Labels'})
 
-%% centred_patch_64p Dataset
+%% centred_patch_64p Dataset (not normalized)
 acc_full = [0.9643939393939394; 0.9242424242424242; 0.9587121212121212;
     0.9723484848484848; 0.9522727272727273; 0.9575757575757575;
     0.9511363636363637; 0.9662878787878788; 0.9613636363636363;
@@ -39,7 +39,7 @@ acc_process = [0.9776515151515152; 0.9821969696969697; 0.9825757575757575;
 acc_ab = 0.5465909090909091;
 acc_ba = 0.6282575757575758;
 
-figure
+figure('name','Convolutional : 64 by 64 patches dataset','NumberTitle','off')
 acc_patches = [acc_full acc_roughness acc_process];
 boxplot(acc_patches, 'Labels',... 
     {'Full Labels','Roughness Labels','Process Labels'})
